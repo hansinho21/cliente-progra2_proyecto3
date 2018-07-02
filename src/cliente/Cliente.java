@@ -19,7 +19,7 @@ public class Cliente extends Application {
     
     @Override
     public void start(Stage stage) throws Exception {
-        Parent root = FXMLLoader.load(getClass().getResource("FXML.fxml"));
+        Parent root = FXMLLoader.load(getClass().getResource("Menu.fxml"));
         
         Scene scene = new Scene(root);
         
