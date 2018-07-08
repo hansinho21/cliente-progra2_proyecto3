@@ -5,8 +5,15 @@
  */
 package cliente;
 
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.ByteArrayInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
+import java.io.PrintStream;
 import java.net.Socket;
 import java.net.URL;
 import java.util.ResourceBundle;
@@ -31,6 +38,7 @@ import javafx.scene.control.TextField;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.AnchorPane;
 import javafx.stage.Stage;
+import sun.misc.IOUtils;
 
 /**
  * FXML Controller class
@@ -39,8 +47,9 @@ import javafx.stage.Stage;
  */
 public class MenuController implements Initializable {
 
-    private boolean isServer = true;
-//    private NetworkConnection connection = isServer ? createSetver() : createClient();
+    private Socket cliente;
+    private BufferedReader entrada, teclado;
+    private PrintStream salida;
 
     private Service<Void> backgroundThread;
 
@@ -54,6 +63,10 @@ public class MenuController implements Initializable {
     private TextField textField;
     @FXML
     private AnchorPane anchorPaneGame;
+    @FXML
+    private TextField textFieldIp;
+    @FXML
+    private TextField textFieldPuerto;
 
     /**
      * Initializes the controller class.
@@ -75,33 +88,35 @@ public class MenuController implements Initializable {
                     protected Void call() throws Exception {
                         int cont = 1;
                         while (true) {
-                            updateMessage("Establishing connection");
-                            
+                            updateMessage("Estableciendo conexión");
+
+//                            String dirWeb = textFieldIp.getText();
+//                            int puerto = Integer.parseInt(textFieldPuerto.getText());
                             String dirWeb = "localhost";
                             int puerto = 2004;
 
                             try {
-                                Socket s = new Socket(dirWeb, puerto);
-                                if (s.isConnected()) {
+                                cliente = new Socket(dirWeb, puerto);
+                                if (cliente.isConnected()) {
                                     System.out.println("Conexión establecida con la dirección: " + dirWeb + " a travéz del puerto: " + puerto);
-                                    updateMessage("Connected!");
+                                    updateMessage("Conectado!");
                                     anchorPaneGame.setVisible(true);
                                     break;
                                 }
                             } catch (Exception e) {
                                 System.err.println("No se pudo establecer conexión con: " + dirWeb + " a travez del puerto: " + puerto);
                                 if (cont == 1) {
-                                    updateMessage("Establishing connection.");
+                                    updateMessage("Estableciendo conexión.");
                                     cont++;
                                     Thread.sleep(750);
                                 }
                                 if (cont == 2) {
-                                    updateMessage("Establishing connection..");
+                                    updateMessage("Estableciendo conexión..");
                                     cont++;
                                     Thread.sleep(750);
                                 }
                                 if (cont == 3) {
-                                    updateMessage("Establishing connection...");
+                                    updateMessage("Estableciendo conexión...");
                                     cont = 1;
                                     Thread.sleep(750);
                                 }
@@ -127,26 +142,23 @@ public class MenuController implements Initializable {
 
     }
 
-    private void connection() {
-        try {
-            Socket soc = new Socket("localhost", 2004);
-            DataOutputStream dout = new DataOutputStream(soc.getOutputStream());
-            dout.writeUTF("Hello");
-            dout.flush();
-            dout.close();
-            soc.close();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+    public void enviar(Socket socket, String mensaje) throws IOException {
+        BufferedWriter bufferedWriter = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()));
+        bufferedWriter.write(mensaje);
+        bufferedWriter.flush();
     }
 
     @FXML
-    private void sendMessage(ActionEvent event) {
-        String message = "";
-        message += textField.getText();
-        textField.clear();
+    private void sendMessage(ActionEvent event) throws IOException {
+        if (!textField.getText().equals("")) {
+            String message = "";
+            message += textField.getText();
+            enviar(cliente, textField.getText());
 
-        textArea.appendText(message + "\n");
+            textField.clear();
+
+            textArea.appendText(message + "\n");
+        }
     }
 
 }
